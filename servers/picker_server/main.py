@@ -27,18 +27,31 @@ class PickerMain:
         PickerConstant()
         threading.Thread(target=self.listen_recv_queue).start()
 
+    def deal_message(self,msg):
+        # 处理消息
+        if msg.op == Message.PICKER_OP_TURN_LEFT:
+            self.send_message(recv_server=Message.CORE_SERVER,op=Message.CORE_OP_SERIAL,value=Message.PICKER_VALUE_LEFT)
+
+        elif msg.op == Message.PICKER_OP_TURN_RIGHT:
+            self.send_message(recv_server=Message.CORE_SERVER, op=Message.CORE_OP_SERIAL,
+                              value=Message.PICKER_VALUE_RIGHT)
+
     def listen_recv_queue(self):
         # 对接收的队列进行监听
         while True:
             if self.recv_queue.qsize() != 0:
                 # 接收队列不为空
-                self.log_handle.info(f"PICKER -- 收到信息:{self.recv_queue.get()}")
+                recv_msg = self.recv_queue.get()
+                self.log_handle.info(f"PICKER -- 收到信息:{recv_msg}")
+                self.deal_message(recv_msg)
             else:
                 pass
 
-    def send_message(self):
-        message = create_message(send_server=PICKER_SERVER, recv_server=CV_SERVER,obj=None,op=None,value=None)
+    def send_message(self,recv_server=None,obj=None,op=None,value=None):
+        message = create_message(send_server=Message.PICKER_SERVER, recv_server=recv_server, obj=obj, op=op, value=value)
         self.send_queue.put(message)
+        self.log_handle.info(f"PICKER -- 已发送:f{message}")
+
 
 if __name__ == '__main__':
     # print("picker服务启动")

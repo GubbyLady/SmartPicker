@@ -8,8 +8,13 @@
 import json
 from config.constant import MY_PATH
 from core.tools import singleton
+from queue import Queue
 
-
+# 通讯常量
+SER_PORT = None
+SER_BAUDRATE = None
+SER_SEND_QUEUE = Queue()
+SER_RECV_QUEUE = Queue()
 
 # 服务名称
 CV_SERVER = "CV_SERVER"

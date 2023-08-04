@@ -9,6 +9,29 @@
 # 后期需要将message的规范写进此处，为了信息体系完善，后期写规范
 
 class Message:
+    # 在此处写下信息协议规范
+    # 服务名称
+    CORE_SERVER= "CORE"
+    CV_SERVER = "CV_SERVER"
+    PICKER_SERVER = "PICKER_SERVER"
+
+    # CORE 服务的信息协议
+    CORE_OP_SERIAL = "send_serial"
+
+    # CV 服务的信息协议
+
+
+    # PICKER 服务的信息协议
+    PICKER_CONFIG_IO = 8
+
+    PICKER_OP_TURN_LEFT = "turn_left"
+    PICKER_OP_TURN_RIGHT = "turn_right"
+    PICKER_OP_DEG = "deg"
+    PICKER_OP_TIME = "time"
+
+    PICKER_VALUE_LEFT = f"#{PICKER_CONFIG_IO}P500T10\r\n"
+    PICKER_VALUE_RIGHT = f"#{PICKER_CONFIG_IO}P2500T10\r\n"
+
     # 信息通讯的核心类
     def __init__(self,send_server,recv_queue,obj,op,value):
         self.send_server = send_server

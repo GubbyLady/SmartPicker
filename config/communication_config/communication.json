@@ -1,0 +1,14 @@
+{
+  "com_list": [
+    {
+      "com_name": "serial",
+      "port": "COM4",
+      "baudrate": "115200"
+    },
+    {
+      "com_name": "mqtt",
+      "xx": "xx",
+      "xxx": "xxx"
+    }
+  ]
+}

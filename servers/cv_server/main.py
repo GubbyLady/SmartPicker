@@ -14,6 +14,7 @@ from core.tools import Logger
 from core.constant import CV_SERVER,PICKER_SERVER,LOGGER_LEVEL
 from core.message_class import create_message
 from servers.constant import SERVER_LOG
+from core.message_class import Message
 # from core.log_handle import MyLog
 
 class CvMain:
@@ -23,7 +24,8 @@ class CvMain:
         self.send_queue = send_queue
         self.recv_queue = recv_queue
         self.Init()
-        self.send_message() # TODO 测试一下
+        threading.Thread(target=self.test_send).start()
+
     def Init(self):
         CvConstant()
         threading.Thread(target=self.listen_recv_queue).start()
@@ -40,10 +42,26 @@ class CvMain:
             else:
                 pass
 
-    def send_message(self):
-        message = create_message(send_server=CV_SERVER,recv_server=PICKER_SERVER,obj="a",op="b",value="c")
+    def send_message(self,recv_server=None,obj=None,op=None,value=None):
+        message = create_message(send_server=Message.CV_SERVER,recv_server=recv_server,obj=obj,op=op,value=value)
         self.send_queue.put(message)
         self.log_handle.info(f"CV -- 已发送:f{message}")
+
+    def test_send(self):
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_LEFT)  # TODO 测试一下
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_RIGHT)
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_LEFT)
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_RIGHT)
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_LEFT)
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_RIGHT)
+        time.sleep(2)
+        self.send_message(recv_server=Message.PICKER_SERVER, op=Message.PICKER_OP_TURN_LEFT)
+        # TODO 测试一下
 
 if __name__ == '__main__':
     pass

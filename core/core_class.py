@@ -10,17 +10,18 @@ import threading
 import time
 import core.constant
 from core.constant import LOGGER_LEVEL
-from core.constant import ServerConfig,QUEUE_SIZE,PICKER_SERVER,CV_SERVER,CORE_LOG
+from core.constant import ServerConfig,QUEUE_SIZE,PICKER_SERVER,CV_SERVER,CORE_LOG,SER_SEND_QUEUE,SER_RECV_QUEUE
 from core.servers_class import CvServer,PickerServer
 from core.tools import Redis_server,Loggers,Logger
 from core.message_class import create_message
-from core.log_handle import MyLog
 from multiprocessing import Process,Queue
+from core.communication_class import SerialCom
+from core.message_class import Message
 """
 该py文件运行流程
-    先启动动态配置
     启动日志
-    启动redis
+    先启动动态配置
+    启动redis（若有）
     启动服务
 
 """
@@ -39,6 +40,7 @@ class CoreClass:
         log_handle.info("CORE -- 日志初始化成功")
         ServerConfig()
         log_handle.info("CORE -- 服务配置动态导入成功")
+        self.com_Init()
         Redis_server()
 
         # 名义上是各个服务的接收消息的队列
@@ -56,6 +58,13 @@ class CoreClass:
 
         threading.Thread(target=self.listen_send_queue).start()
 
+    def com_Init(self):
+        try:
+            #初始化通讯工具
+            SerialCom(SER_SEND_QUEUE,SER_RECV_QUEUE)
+            log_handle.info("CORE -- 初始化串口工具成功")
+        except Exception as e:
+            pass
 
     def server_process_run(self,class_name, server_name,send_queue,recv_queue):
         # 进行实例化服务操作,启动服务
@@ -87,6 +96,14 @@ class CoreClass:
                 self.re_queue_send[server_name]["recv_queue"].put(message)
                 # Loggers().log("info",f"主进程向子进程:{server_name} 发送信息:{message}")
                 log_handle.info(f"CORE -- 处理信息:主进程向子进程:{server_name} 发送信息:{message}")
+            elif message_recv_server == Message.CORE_SERVER:
+                # 发送给core服务的信息在此处理
+                if message.op == Message.CORE_OP_SERIAL:
+                    #请求发送串口的消息
+                    data = message.value
+                    SER_SEND_QUEUE.put(data)
+                    break
+
 
     def listen_send_queue(self):
         while True:
