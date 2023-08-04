@@ -12,7 +12,14 @@
 import logging
 from abc import abstractmethod
 import datetime
+
+from nb_log import get_logger
+
+import core.constant
 from config.constant import MY_PATH
+
+
+# from core.constant import CORE_LOG
 
 class Tools(object):
 
@@ -43,7 +50,6 @@ class Redis_server:
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
 
-@singleton
 class Loggers:
     def __init__(self):
         log_filename = f"{MY_PATH}\log\{get_current_date()}_log.log"
@@ -79,4 +85,24 @@ class Loggers:
 # logger.log('info', 'This is an information message.')
 # logger.log('error', 'An error occurred.')
 # Loggers()
+
+
+class Logger(object):
+    """
+    日志类
+    """
+    __isinstance = False
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__isinstance:  # 如果被实例化了
+            return cls.__isinstance.logger  # 返回实例化对象
+        cls.__isinstance = object.__new__(cls)  # 否则实例化
+        return cls.__isinstance  # 返回实例化的对象
+
+    def __init__(self, **kwargs):
+        self.logger = get_logger(name=kwargs.get("name"), log_path=core.constant.MY_PATH + "\\log",
+                                 log_filename="SmartPicker_log.log")
+
+    def __call__(self, *args, **kwargs):
+        return self.logger
 

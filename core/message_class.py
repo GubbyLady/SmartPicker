@@ -6,6 +6,8 @@
 # @File    : message_class
 # @Software: PyCharm
 
+# 后期需要将message的规范写进此处，为了信息体系完善，后期写规范
+
 class Message:
     # 信息通讯的核心类
     def __init__(self,send_server,recv_queue,obj,op,value):

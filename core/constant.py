@@ -9,9 +9,15 @@ import json
 from config.constant import MY_PATH
 from core.tools import singleton
 
+
+
 # 服务名称
-CV_SERVER = "CV"
-PICKER_SERVER = "PICKER"
+CV_SERVER = "CV_SERVER"
+PICKER_SERVER = "PICKER_SERVER"
+
+# 核心服务的日志管理器
+CORE_LOG = None
+LOGGER_LEVEL = 'debug'
 
 @singleton
 class CoreConfig:

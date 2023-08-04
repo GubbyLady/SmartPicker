@@ -7,10 +7,12 @@
 # @Software: PyCharm
 import logging
 
+import servers.constant
 from core.tools import singleton
 from core.tools import Loggers
 
 @singleton
 class PickerConstant:
     def __init__(self):
-        logging.info("PickerConstant动态配置成功")
+        self.log_handle = servers.constant.SERVER_LOG()
+        self.log_handle.info("PICKER -- 动态配置成功")

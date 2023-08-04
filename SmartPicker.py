@@ -5,7 +5,7 @@
 # @Project : SmartPicker
 # @File    : SmartPicker
 # @Software: PyCharm
-from core.core import CoreClass
+from core.core_class import CoreClass
 
 if __name__ == '__main__':
     coreApp = CoreClass()

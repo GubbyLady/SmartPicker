@@ -6,10 +6,17 @@
 # @File    : constant
 # @Software: PyCharm
 import logging
+
+import servers.constant
 from core.tools import Loggers
 from core.tools import singleton
+from servers.constant import SERVER_LOG
+
+
 
 @singleton
 class CvConstant:
     def __init__(self):
-        logging.info("CV动态配置成功")
+        self.log_handle = servers.constant.SERVER_LOG()
+        self.log_handle.info("CV -- 动态配置成功")
+        # servers.constant.SERVER_LOG

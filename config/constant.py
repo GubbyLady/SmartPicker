@@ -5,5 +5,5 @@
 # @Project : SmartPicker
 # @File    : constant
 # @Software: PyCharm
-
-MY_PATH = "D:\pyProject\pythonProject\SmartPicker"
+import os
+MY_PATH = os.path.abspath(".")

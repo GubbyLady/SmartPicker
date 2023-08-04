@@ -8,20 +8,23 @@
 import threading
 import time
 
+import servers.constant
 from servers.cv_server.constant import CvConstant
-from core.tools import Loggers
-from core.constant import CV_SERVER,PICKER_SERVER
+from core.tools import Logger
+from core.constant import CV_SERVER,PICKER_SERVER,LOGGER_LEVEL
 from core.message_class import create_message
+from servers.constant import SERVER_LOG
+# from core.log_handle import MyLog
 
 class CvMain:
     def __init__(self,send_queue,recv_queue):
+        servers.constant.SERVER_LOG = Logger(name="CV",level=LOGGER_LEVEL)
+        self.log_handle = servers.constant.SERVER_LOG()
         self.send_queue = send_queue
         self.recv_queue = recv_queue
         self.Init()
-        self.send_message()
-
+        self.send_message() # TODO 测试一下
     def Init(self):
-        Loggers()
         CvConstant()
         threading.Thread(target=self.listen_recv_queue).start()
 
@@ -33,15 +36,14 @@ class CvMain:
         while True:
             if self.recv_queue.qsize() != 0:
                 # 接收队列不为空
-                print(self.recv_queue.get())
+                self.log_handle.info(self.recv_queue.get())
             else:
                 pass
 
     def send_message(self):
         message = create_message(send_server=CV_SERVER,recv_server=PICKER_SERVER,obj="a",op="b",value="c")
         self.send_queue.put(message)
-        print("已发送")
-
+        self.log_handle.info(f"CV -- 已发送:f{message}")
 
 if __name__ == '__main__':
     pass

@@ -7,19 +7,23 @@
 # @Software: PyCharm
 import threading
 
-from core.constant import CV_SERVER, PICKER_SERVER
+import servers.constant
+from core.constant import CV_SERVER, PICKER_SERVER, LOGGER_LEVEL
 from core.message_class import Message,create_message
+# from core.log_handle import MyLog
 from servers.picker_server.constant import PickerConstant
-from core.tools import Loggers
+from servers.constant import SERVER_LOG
+from core.tools import Logger
 
 class PickerMain:
     def __init__(self, send_queue, recv_queue):
+        servers.constant.SERVER_LOG = Logger(name="PICKER",level=LOGGER_LEVEL)
+        self.log_handle = servers.constant.SERVER_LOG()
         self.send_queue = send_queue
         self.recv_queue = recv_queue
         self.Init()
 
     def Init(self):
-        Loggers()
         PickerConstant()
         threading.Thread(target=self.listen_recv_queue).start()
 
@@ -28,7 +32,7 @@ class PickerMain:
         while True:
             if self.recv_queue.qsize() != 0:
                 # 接收队列不为空
-                print(self.recv_queue.get())
+                self.log_handle.info(f"PICKER -- 收到信息:{self.recv_queue.get()}")
             else:
                 pass
 

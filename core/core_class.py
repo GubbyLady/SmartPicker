@@ -8,9 +8,13 @@
 import logging
 import threading
 import time
-from core.constant import ServerConfig,QUEUE_SIZE
+import core.constant
+from core.constant import LOGGER_LEVEL
+from core.constant import ServerConfig,QUEUE_SIZE,PICKER_SERVER,CV_SERVER,CORE_LOG
 from core.servers_class import CvServer,PickerServer
-from core.tools import Redis_server,Loggers
+from core.tools import Redis_server,Loggers,Logger
+from core.message_class import create_message
+from core.log_handle import MyLog
 from multiprocessing import Process,Queue
 """
 该py文件运行流程
@@ -20,15 +24,21 @@ from multiprocessing import Process,Queue
     启动服务
 
 """
+log_handle = None
+
 class CoreClass:
     #核心类：所有服务的主进程，其他服务都是其子进程
     def __init__(self):
         self.core_Init()
 
     def core_Init(self):
+        global log_handle
+        # Logger(name="APP-CORE", filename="APP-CORE", level=LOGGER_LEVEL)
+        core.constant.CORE_LOG = Logger(name="CORE",level=LOGGER_LEVEL)
+        log_handle = core.constant.CORE_LOG()
+        log_handle.info("CORE -- 日志初始化成功")
         ServerConfig()
-        logging.info("服务配置动态导入成功")
-        Loggers()
+        log_handle.info("CORE -- 服务配置动态导入成功")
         Redis_server()
 
         # 名义上是各个服务的接收消息的队列
@@ -45,12 +55,12 @@ class CoreClass:
         self.server_Init()
 
         threading.Thread(target=self.listen_send_queue).start()
-        print()
+
 
     def server_process_run(self,class_name, server_name,send_queue,recv_queue):
         # 进行实例化服务操作,启动服务
         class_obj = globals()[class_name]
-        print(f"{server_name}服务启动成功 (进程内启动...)")
+        # self.log_handle.info(f"{server_name}服务启动成功 (进程内启动...)")
         instance = class_obj(send_queue=send_queue, recv_queue=recv_queue)
         # logging.info(f"{server_name}服务启动成功 (进程内启动...)")
 
@@ -64,7 +74,19 @@ class CoreClass:
 
     def deal_message(self,message):
         # 对信息进行处理和提取接收方，对接收方进行发送，形成消息通路
-        print(f"处理message:{message}")
+        # print(f"处理message:{message}")
+        message_send_server = message.send_server
+        message_recv_server = message.recv_server
+        message_obj = message.obj
+        message_op = message.op
+        message_value = message.value
+
+        for server_name in self.server_names:
+            if message_recv_server == server_name:
+                # 该服务是接收方，将数据转发一遍
+                self.re_queue_send[server_name]["recv_queue"].put(message)
+                # Loggers().log("info",f"主进程向子进程:{server_name} 发送信息:{message}")
+                log_handle.info(f"CORE -- 处理信息:主进程向子进程:{server_name} 发送信息:{message}")
 
     def listen_send_queue(self):
         while True:
@@ -72,8 +94,8 @@ class CoreClass:
             for server_name in self.server_names:
                 if self.send_queue_re[server_name]["send_queue"].qsize() != 0:
                     message = self.send_queue_re[server_name]["send_queue"].get()
+                    log_handle.info(f"CORE -- 接收信息:{message}")
                     self.deal_message(message)
-                    # print("接收到")
                 else:
                     pass
 
@@ -95,6 +117,8 @@ class CoreClass:
             self.server_names.append(server_name)
             p = Process(target=self.server_process_run, args=(class_name, server_name,send_queue,recv_queue,))
             p.start()
+            log_handle.info(f"CORE -- 初始化服务进程:{server_name}成功")
+
 
 if __name__ == '__main__':
     pass
