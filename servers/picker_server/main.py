@@ -6,12 +6,13 @@
 # @File    : main
 # @Software: PyCharm
 import threading
+import time
 
 import servers.constant
 from core.constant import CV_SERVER, PICKER_SERVER, LOGGER_LEVEL
 from core.message_class import Message,create_message
 # from core.log_handle import MyLog
-from servers.picker_server.constant import PickerConstant
+from servers.picker_server.constant import PickerConstant,CLASS_NUM_ONE,CLASS_NUM_TWO,CLASS_NUM_THREE
 from servers.constant import SERVER_LOG
 from core.tools import Logger
 
@@ -26,6 +27,14 @@ class PickerMain:
     def Init(self):
         PickerConstant()
         threading.Thread(target=self.listen_recv_queue).start()
+        # self.recover_picker()
+        threading.Thread(target=self.recover_picker).start()
+
+    def recover_picker(self):
+        # 将舵机恢复正位
+        self.send_message(recv_server=Message.CORE_SERVER, op=Message.CORE_OP_SERIAL,
+                          value=Message.PICKER_VALUE_RECOVER)
+        self.log_handle.info("PICKER -- 舵机已复位")
 
     def deal_message(self,msg):
         # 处理消息
@@ -35,6 +44,28 @@ class PickerMain:
         elif msg.op == Message.PICKER_OP_TURN_RIGHT:
             self.send_message(recv_server=Message.CORE_SERVER, op=Message.CORE_OP_SERIAL,
                               value=Message.PICKER_VALUE_RIGHT)
+
+        elif msg.op == Message.PICKER_OP_START_PICKER:
+            for classA in msg.value:
+                class_num = int(str(classA)[-1])
+                if class_num == CLASS_NUM_ONE:
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_ONE)
+                    time.sleep(1)
+                    self.recover_picker()
+                elif class_num == CLASS_NUM_TWO:
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO)
+                    time.sleep(1)
+                    self.recover_picker()
+                elif class_num == CLASS_NUM_THREE:
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_THREE)
+                    time.sleep(1)
+                    self.recover_picker()
+
+
+    def turn_picker(self,value):
+        self.send_message(recv_server=Message.CORE_SERVER,op=Message.CORE_OP_SERIAL,
+                              value=value)
+
 
     def listen_recv_queue(self):
         # 对接收的队列进行监听

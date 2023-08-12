@@ -28,9 +28,14 @@ class Message:
     PICKER_OP_TURN_RIGHT = "turn_right"
     PICKER_OP_DEG = "deg"
     PICKER_OP_TIME = "time"
+    PICKER_OP_START_PICKER = "start"
 
     PICKER_VALUE_LEFT = f"#{PICKER_CONFIG_IO}P500T10\r\n"
     PICKER_VALUE_RIGHT = f"#{PICKER_CONFIG_IO}P2500T10\r\n"
+    PICKER_VALUE_RECOVER = f"#{PICKER_CONFIG_IO}P1500T10\r\n"
+    PICKER_VALUE_CLASS_ONE = f"#{PICKER_CONFIG_IO}P800T10\r\n"
+    PICKER_VALUE_CLASS_TWO = f"#{PICKER_CONFIG_IO}P1600T10\r\n"
+    PICKER_VALUE_CLASS_THREE = f"#{PICKER_CONFIG_IO}P2400T10\r\n"
 
     # 信息通讯的核心类
     def __init__(self,send_server,recv_queue,obj,op,value):

@@ -1,6 +1,4 @@
 {
-  "name": "cv_config",
-  "version": "1.0.0",
-  "dependencies": {
-  }
+  "camera_name": "usb_camera"
 }
+

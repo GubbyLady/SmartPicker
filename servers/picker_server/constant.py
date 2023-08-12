@@ -6,10 +6,13 @@
 # @File    : constant
 # @Software: PyCharm
 import logging
-
 import servers.constant
 from core.tools import singleton
 from core.tools import Loggers
+
+CLASS_NUM_ONE = 1
+CLASS_NUM_TWO = 2
+CLASS_NUM_THREE = 3
 
 @singleton
 class PickerConstant:
