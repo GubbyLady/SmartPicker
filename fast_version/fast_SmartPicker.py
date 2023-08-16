@@ -34,8 +34,8 @@ class Fast_SmartPicker:
         self.send_queue = Queue()
         self.recv_queue = Queue()
         self.log_handle.info("FAST_APP -- 轻量化APP正在初始化")
-        Process(target=self.create_serial_conn,args=(self.send_queue,self.recv_queue)).start()
-        # self.create_serial_conn(send_queue=self.send_queue,recv_queue=self.recv_queue)
+        # Process(target=self.create_serial_conn,args=(self.send_queue,self.recv_queue)).start()
+        self.create_serial_conn(send_queue=self.send_queue,recv_queue=self.recv_queue)
         self.Init()
 
     def Init(self):
