@@ -5,14 +5,14 @@
 # @Project : SmartPicker
 # @File    : main
 # @Software: PyCharm
+import sys
 import threading
 import time
-
 import numpy as np
 from PIL import Image
-
+import camera_SDK.DaHeng.gxipy as gx
 import servers.constant
-from servers.cv_server.constant import CvConstant,MY_CAMERA,HAIKANG,DAHENG,USB_CAMERA,CLASSES_LIST,MODEL_PATH,TEST_IMG_LIST
+from servers.cv_server.constant import CvConstant, MY_CAMERA, HAIKANG, DAHENG, USB_CAMERA, CLASSES_LIST, MODEL_PATH,TEST_IMG_LIST, TEST_MP4_PATH
 from core.tools import Logger
 from core.constant import CV_SERVER,PICKER_SERVER,LOGGER_LEVEL
 from core.message_class import create_message
@@ -36,9 +36,6 @@ class CvMain:
         threading.Thread(target=self.detect_run,args=(MODEL_PATH,)).start()
 
     def Init(self):
-        self.class_count = 0 # 类别计数器
-        self.last_classes_list = None # 上一次类别
-        self.cur_clasees_list = None
         CvConstant()
         threading.Thread(target=self.listen_recv_queue).start()
 
@@ -59,27 +56,44 @@ class CvMain:
             self.log_handle.info("CV -- 接入摄像头型号为：海康威视")
         elif servers.cv_server.constant.MY_CAMERA == DAHENG:
             self.log_handle.info("CV -- 接入摄像头型号为：大恒工业")
+            # device_manager = gx.DeviceManager()
+            # dev_num, dev_info_list = device_manager.update_device_list()
+            # if dev_num == 0:
+            #     sys.exit(1)
+            # str_index = dev_info_list[0].get("index")
+            # cam = device_manager.open_device_by_index(str_index)
+            # return cam
         elif servers.cv_server.constant.MY_CAMERA == USB_CAMERA:
             self.log_handle.info("CV -- 接入摄像头型号为：USB摄像头")
             try:
-                # return cv2.VideoCapture(0)
-                return cv2.VideoCapture("servers/cv_server/my_detect/test_video/1.mp4")
+                cap = cv2.VideoCapture(0)
+                # cap = cv2.VideoCapture(TEST_MP4_PATH)
+                return cap
             except:
                 self.log_handle.info("CV -- 摄像头启动失败")
 
-    def deal_classes(self,classes):
+    def deal_classes(self,class_detect_res):
         classes_list = []
         try:
-            for i in classes.cpu().numpy():
-                classes_list.append(servers.cv_server.constant.CLASSES_LIST[int(i)])
-
-            if len(classes_list) == 0:
-                return None
+            # for i in classes.cpu().numpy():
+            #     classes_list.append(servers.cv_server.constant.CLASSES_LIST[int(i)])
+            #
+            # if len(classes_list) == 0:
+            #     return None
+            classes_list.append(servers.cv_server.constant.CLASSES_LIST[int(class_detect_res)])
             self.log_handle.info(f"CV -- 检测到类别:{classes_list}")
             self.send_message(recv_server=PICKER_SERVER,op=Message.PICKER_OP_START_PICKER,value=classes_list)
         except Exception as e:
             self.log_handle.error(e)
 
+    def process_image(self,image):
+        # 降低图像分辨率
+        resized_image = cv2.resize(image, None, fx=0.5, fy=0.5)
+
+        # 应用高斯模糊
+        blurred_image = cv2.GaussianBlur(resized_image, (5, 5), 0)
+
+        return blurred_image
 
     def detect_run(self,model):
         # 启动摄像头
@@ -87,46 +101,124 @@ class CvMain:
         model = YOLO(model=model)
         # 打开摄像头
         cap = self.open_camera()
-        # self.log_handle.info("CV -- 摄像头启动成功")
-        # while cap.isOpened():
-        #     # 获取图像
-        #     res, frame = cap.read()
-        #     # 如果读取成功
-        #     if res:
-        #         # 正向推理
-        #         results = model(frame)
-        #         # 处理结果
-        #         classes = results[0].boxes.cls
-        #         self.deal_classes(classes)
-        #
-        # # 释放连接
-        # cap.release()
+        class_list = list()
+        if servers.cv_server.constant.MY_CAMERA == HAIKANG:
+            self.log_handle.info("CV -- 海康威视检测启动")
+        elif servers.cv_server.constant.MY_CAMERA == DAHENG:
+            self.log_handle.info("CV -- 大恒工业检测启动")
+            device_manager = gx.DeviceManager()
+            dev_num, dev_info_list = device_manager.update_device_list()
+            if dev_num == 0:
+                sys.exit(1)
+            str_index = dev_info_list[0].get("index")
+            cam = device_manager.open_device_by_index(str_index)
+            cam.stream_on()
+            count = 0
+            while True:
+                raw_image = cam.data_stream[0].get_image()
+                raw_image.save_raw("raw_image.raw")
+                rgb_image = raw_image.convert("RGB")
+                if rgb_image is None:
+                    continue
+                numpy_image = rgb_image.get_numpy_array()
+                if numpy_image is None:
+                    continue
+                image = Image.fromarray(numpy_image, 'RGB')
+                image_np = np.array(image)
+                # Convert RGB image to BGR for OpenCV
+                bgr_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
 
-        image_paths = servers.cv_server.constant.TEST_IMG_LIST
-        target_size = (96,96)
-        for image_path in image_paths:
-            # 读取图片
-            frame = cv2.imread(image_path)
-            # 缩放图片到目标尺寸
-            # resized_frame = cv2.resize(frame, target_size)
-            # 正向推理
-            results = model(frame)
-            c = results[0].boxes.cls
-            self.deal_classes(c)
-            # time.sleep(2)
-            # 绘制结果
-            annotated_frame = results[0].plot()
-            annotated_frame = cv2.resize(annotated_frame,(600,600))
-            # 显示图像
-            cv2.imshow(winname="YOLOV8", mat=annotated_frame)
+                processed_image = self.process_image(bgr_image)
+                if count == 10:
+                    count = 0
+                    results = model(processed_image)
+                    c = results[0].boxes.cls
+                    for i in results[0].boxes.xywhn.cpu().numpy():
+                        if i[1] > 0.5 and i[1] < 0.9:
+                            for i in c:
+                                class_list.append(int(i))
+                        else:
+                            # 进行检测
+                            if len(class_list) > 10:
+                                class_detect_res = max(class_list, key=class_list.count)
+                                class_list = list()
+                                self.deal_classes(class_detect_res)
+                            else:
+                                class_list = list()
 
-            # 按ESC退出
-            if cv2.waitKey(1) == 27:
-                break
-            time.sleep(5)
+                    # 绘制结果
+                    annotated_frame = results[0].plot()
+                    # 显示图像
+                    cv2.imshow(winname="YOLOV8", mat=annotated_frame)
+                count+=1
+                # 按ESC退出
+                if cv2.waitKey(1) == 27:
+                    break
+            # 释放连接
+            cam.release()
+            cv2.destroyAllWindows()
+            cam.stream_off()
 
-        # 关闭窗口
-        # cv2.destroyAllWindows()
+        elif servers.cv_server.constant.MY_CAMERA == USB_CAMERA:
+            self.log_handle.info("CV -- 摄像头启动成功")
+            while cap.isOpened():
+                # 获取图像
+                res, frame = cap.read()
+                # 如果读取成功
+                if res:
+                    # 正向推理
+                    # 图像处理
+                    processed_image = self.process_image(frame)
+                    results = model(processed_image)
+                    c = results[0].boxes.cls
+                    for i in results[0].boxes.xywhn.cpu().numpy():
+                        if i[1] > 0.5 and i[1] < 0.9:
+                            for i in c:
+                                class_list.append(int(i))
+                        else:
+                            # 进行检测
+                            if len(class_list) > 10:
+                                class_detect_res = max(class_list, key=class_list.count)
+                                class_list = list()
+                                self.deal_classes(class_detect_res)
+                            else:
+                                class_list = list()
+
+                    # 绘制结果
+                    annotated_frame = results[0].plot()
+                    # 显示图像
+                    cv2.imshow(winname="YOLOV8", mat=annotated_frame)
+
+                    # 按ESC退出
+                    if cv2.waitKey(1) == 27:
+                        break
+            # 释放连接
+            cap.release()
+            cv2.destroyAllWindows()
+            # image_paths = servers.cv_server.constant.TEST_IMG_LIST
+            # for image_path in image_paths:
+            #     # 读取图片
+            #     frame = cv2.imread(image_path)
+            #     # 缩放图片到目标尺寸
+            #     # resized_frame = cv2.resize(frame, target_size)
+            #     # 正向推理
+            #     results = model(frame)
+            #     c = results[0].boxes.cls
+            #     self.deal_classes(c)
+            #     # time.sleep(2)
+            #     # 绘制结果.
+            #     annotated_frame = results[0].plot()
+            #     annotated_frame = cv2.resize(annotated_frame,(600,600))
+            #     # 显示图像
+            #     cv2.imshow(winname="YOLOV8", mat=annotated_frame)
+            #
+            #     # 按ESC，退出
+            #     if cv2.waitKey(1) == 27:
+            #         break
+            #     time.sleep(5)
+            #
+            # # 关闭窗口
+            # cv2.destroyAllWindows()
 
     def send_message(self,recv_server=None,obj=None,op=None,value=None):
         message = create_message(send_server=Message.CV_SERVER,recv_server=recv_server,obj=obj,op=op,value=value)

@@ -6,12 +6,12 @@
 # @File    : communication_class
 # @Software: PyCharm
 import json
-
+import sys
 import serial as Ser
 import threading
 import time
 import core.constant
-from core.constant import SER_PORT,SER_BAUDRATE
+from core.constant import SER_PORT,SER_BAUDRATE,NO_SERIAL_TURN_OFF
 from config.constant import MY_PATH
 from core.tools import Logger
 from core.tools import singleton
@@ -35,9 +35,19 @@ class SerialCom:
             # self.SERIAL_SEND = SEND_SERIAL
             # self.SERIAL_RECEIVING = RECEIVING_SERIAL
         except Exception as e:
-            Logger().error(e)
-            Logger().error("COM -- 串口通讯初始化失败")
-
+            if NO_SERIAL_TURN_OFF:
+                Logger().error(e)
+                Logger().error("COM -- 串口通讯初始化失败")
+                Logger().error("COM -- 串口启动失败：程序3秒后将退出")
+                time.sleep(1)
+                Logger().error("COM -- 串口启动失败：程序2秒后将退出")
+                time.sleep(1)
+                Logger().error("COM -- 串口启动失败：程序即将退出")
+                time.sleep(1)
+                sys.exit()
+            else:
+                Logger().error(e)
+                Logger().error("COM -- 串口启动失败")
     def Init(self):
         # 动态配置
         # 读取 JSON 文件

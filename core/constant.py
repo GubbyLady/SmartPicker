@@ -10,6 +10,19 @@ from config.constant import MY_PATH
 from core.tools import singleton
 from queue import Queue
 
+# 启动配置写在这   1-是 0-否
+
+# 是否使用轻量级APP
+USE_FAST_APP = 1
+
+# 检测不到串口时是否关闭程序
+NO_SERIAL_TURN_OFF = 0 # 0 是不关闭  1 是关闭
+
+# 舵机动作间隔时间
+# 调整舵机等待动作时间
+# 解释：当检测到类别时，舵机开启反向动作，经过PICKER_WAITE秒后，进行分类动作
+PICKER_WAITE = 3
+
 # 通讯常量
 SER_PORT = None
 SER_BAUDRATE = None

@@ -9,7 +9,7 @@ import threading
 import time
 
 import servers.constant
-from core.constant import CV_SERVER, PICKER_SERVER, LOGGER_LEVEL
+from core.constant import CV_SERVER, PICKER_SERVER, LOGGER_LEVEL,PICKER_WAITE
 from core.message_class import Message,create_message
 # from core.log_handle import MyLog
 from servers.picker_server.constant import PickerConstant,CLASS_NUM_ONE,CLASS_NUM_TWO,CLASS_NUM_THREE
@@ -49,17 +49,20 @@ class PickerMain:
             for classA in msg.value:
                 class_num = int(str(classA)[-1])
                 if class_num == CLASS_NUM_ONE:
-                    self.turn_picker(Message.PICKER_VALUE_CLASS_ONE)
-                    time.sleep(1)
-                    self.recover_picker()
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_ONE_1)
+                    time.sleep(PICKER_WAITE)
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_ONE_2)
+                    # self.recover_picker()
                 elif class_num == CLASS_NUM_TWO:
-                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO)
-                    time.sleep(1)
-                    self.recover_picker()
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO_1)
+                    time.sleep(PICKER_WAITE)
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO_2)
+                    # self.recover_picker()
                 elif class_num == CLASS_NUM_THREE:
-                    self.turn_picker(Message.PICKER_VALUE_CLASS_THREE)
-                    time.sleep(1)
-                    self.recover_picker()
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO_1)
+                    time.sleep(PICKER_WAITE)
+                    self.turn_picker(Message.PICKER_VALUE_CLASS_TWO_2)
+                    # self.recover_picker()
 
 
     def turn_picker(self,value):
@@ -74,7 +77,8 @@ class PickerMain:
                 # 接收队列不为空
                 recv_msg = self.recv_queue.get()
                 self.log_handle.info(f"PICKER -- 收到信息:{recv_msg}")
-                self.deal_message(recv_msg)
+                threading.Thread(target=self.deal_message,args=(recv_msg,)).start()
+                # self.deal_message(recv_msg)
             else:
                 pass
 

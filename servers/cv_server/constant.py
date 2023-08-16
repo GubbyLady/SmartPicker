@@ -8,11 +8,12 @@
 import json
 import logging
 
+import fast_version.constant
 import servers.constant
 from core.tools import Loggers
 from core.tools import singleton
 from servers.constant import SERVER_LOG
-
+from core.constant import USE_FAST_APP
 
 # 摄像机的型号
 HAIKANG = "haikang"
@@ -37,6 +38,9 @@ TEST_IMG_LIST = []
 
 # 测试图片文件夹路径
 TEST_IMG_PATH = "servers/cv_server/my_detect/test_video/img"
+
+# 测试视频路径
+TEST_MP4_PATH = "D:/pyProject/pythonProject/SmartPicker/servers/cv_server/my_detect/test_video\mp4/1.mp4"
 
 def Init_img_list():
     global TEST_IMG_LIST
@@ -69,7 +73,10 @@ class CvConstant:
         with open(file_path, "r") as file:
             self.config = json.load(file)
         MY_CAMERA = self.config["camera_name"]
-        self.log_handle = servers.constant.SERVER_LOG()
+        if USE_FAST_APP:
+            self.log_handle = fast_version.constant.FAST_LOG()
+        else:
+            self.log_handle = servers.constant.SERVER_LOG()
         read_classes_file(self.log_handle)
         Init_img_list()
         self.log_handle.info("CV -- 动态配置成功")
