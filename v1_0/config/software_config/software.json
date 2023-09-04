@@ -1,0 +1,14 @@
+{
+  "software_list": [
+    {
+      "software_name": "CV",
+      "service_name": "CV_SERVER",
+      "class_name": "CvServer"
+    },
+    {
+      "software_name": "PICKER",
+      "service_name": "PICKER_SERVER",
+      "class_name": "PickerServer"
+    }
+  ]
+}

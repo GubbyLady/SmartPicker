@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/8/14/19:57
+# @Author  : 周伟帆
+# @Project : SmartPicker
+# @File    : 使用文档
+# @Software: PyCharm
+
+1，在init_config 修改相关配置信息
+
+2，安装requirements依赖，该依赖包是yolov8的，装后可能存在少数
+    依赖未安装，依次pip就行，很少的。
+
+3，跑SmartPicker_v2_0.py
